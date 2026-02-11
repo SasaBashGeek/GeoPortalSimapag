@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>GEOPORTAL - PADRON y SECTORES 2025</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="login-container">
+        <!-- LOGIN FORM -->
+        <div id="login-box">
+            <div class="login-logo"><i class="fas fa-map-marked-alt"></i></div>
+            <div class="login-title">GEOPORTAL 2025</div>
+            <div class="login-subtitle">Sistema de visualización de PADRÓN + SECTORES</div>
+            
+            <form id="login-form">
+                <div class="login-input-group">
+                    <label for="username"><i class="fas fa-user"></i> Usuario:</label>
+                    <input type="text" id="username" class="login-input" placeholder="Ingrese su usuario" required autocapitalize="none" autocomplete="username">
+                </div>
+                
+                <div class="login-input-group">
+                    <label for="password"><i class="fas fa-lock"></i> Contraseña:</label>
+                    <input type="password" id="password" class="login-input" placeholder="Ingrese su contraseña" required autocomplete="current-password">
+                </div>
+                
+                <div id="login-error"></div>
+                
+                <button type="submit" id="login-btn"><i class="fas fa-sign-in-alt"></i> INICIAR SESIÓN</button>
+                
+                <div class="divider"><span>O</span></div>
+                
+                <button type="button" id="show-register-btn" class="action-button btn-register">
+                    <i class="fas fa-user-plus"></i> CREAR NUEVA CUENTA
+                </button>
+                
+                <div class="login-footer">
+                    <i class="fas fa-info-circle"></i> Credenciales de prueba: <strong>admin</strong> / <strong>Temporal2026</strong>
+                </div>
+            </form>
+        </div>
+        
+        <!-- REGISTER FORM -->
+        <div id="register-box">
+            <div class="register-logo"><i class="fas fa-user-plus"></i></div>
+            <div class="register-title">REGISTRO DE USUARIO</div>
+            
+            <form id="register-form">
+                <div class="login-input-group">
+                    <label for="reg-username"><i class="fas fa-user"></i> Nuevo usuario:</label>
+                    <input type="text" id="reg-username" class="login-input" placeholder="Ingrese usuario" required autocapitalize="none" autocomplete="off">
+                </div>
+                
+                <div class="login-input-group">
+                    <label for="reg-password"><i class="fas fa-lock"></i> Contraseña:</label>
+                    <input type="password" id="reg-password" class="login-input" placeholder="Ingrese contraseña" required autocomplete="off">
+                </div>
+                
+                <div class="login-input-group">
+                    <label for="reg-confirm-password"><i class="fas fa-lock"></i> Confirmar contraseña:</label>
+                    <input type="password" id="reg-confirm-password" class="login-input" placeholder="Confirme contraseña" required autocomplete="off">
+                </div>
+                
+                <div id="register-message"></div>
+                <div id="register-error"></div>
+                
+                <button type="submit" id="register-btn" style="width:100%; padding:16px; background:linear-gradient(135deg, #28a745, #20c997); color:white; border:none; border-radius:8px; font-weight:bold; margin-top:10px;">
+                    <i class="fas fa-check-circle"></i> REGISTRARSE
+                </button>
+                
+                <button type="button" id="back-to-login-from-register" class="btn-back" style="width:100%; margin-top:15px;">
+                    <i class="fas fa-arrow-left"></i> Volver al inicio de sesión
+                </button>
+            </form>
+            
+            <div class="login-footer" style="margin-top: 15px;">
+                <i class="fas fa-info-circle"></i> Crea tu cuenta para acceder al geoportal
+            </div>
+        </div>
+    </div>
+    
+    <div id="main-content" class="hidden">
+        <div id="loading">
+            <div class="spinner"></div>
+            <div id="loadingText">Inicializando geoportal...</div>
+            <div class="loading-info" id="loadingInfo"></div>
+            <div class="progress-container">
+                <div class="progress-bar" id="progressBar" style="width: 0%">0%</div>
+            </div>
+            <div class="loading-details" id="loadingDetails"></div>
+        </div>
+        
+        <button id="sidebar-toggle" class="hidden touch-feedback" title="Mostrar/ocultar panel"><i class="fas fa-bars"></i></button>
+        
+        <!-- FORMULARIO DE CREACIÓN DE PUNTOS EN EL MAPA - SIN SECTOR -->
+        <div id="create-point-map-box">
+            <button class="close-btn" id="close-create-point-map"><i class="fas fa-times"></i></button>
+            <div class="create-point-logo"><i class="fas fa-map-marker-alt"></i></div>
+            <div class="create-point-title">AGREGAR NUEVO PUNTO</div>
+            
+            <form id="create-point-map-form">
+                <div class="coordinate-info">
+                    <i class="fas fa-map-pin"></i> <strong>Coordenadas seleccionadas:</strong><br>
+                    Latitud: <span id="selected-lat">0.0000</span> | Longitud: <span id="selected-lng">0.0000</span>
+                </div>
+                
+                <div class="login-input-group">
+                    <label for="point-map-rpu"><i class="fas fa-hashtag"></i> RPU:</label>
+                    <input type="text" id="point-map-rpu" class="login-input" placeholder="Ej: RPU-001" required autocomplete="off">
+                </div>
+                
+                <div class="login-input-group">
+                    <label for="point-map-nombre"><i class="fas fa-user"></i> Nombre:</label>
+                    <input type="text" id="point-map-nombre" class="login-input" placeholder="Nombre del titular" required autocomplete="off">
+                </div>
+                
+                <div class="form-row">
+                    <div class="login-input-group">
+                        <label for="point-map-zona"><i class="fas fa-map-marker-alt"></i> Zona:</label>
+                        <select id="point-map-zona" class="login-input" required>
+                            <option value="">Seleccione zona</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="login-input-group">
+                        <label for="point-map-estatus"><i class="fas fa-tag"></i> Estatus:</label>
+                        <select id="point-map-estatus" class="login-input" required>
+                            <option value="">Seleccione estatus</option>
+                            <option value="Activo">Activo</option>
+                            <option value="Suspendido">Suspendido</option>
+                            <option value="Cancelado">Cancelado</option>
+                        </select>
+                    </div>
+                    <div class="login-input-group">
+                        <label for="point-map-tarifa"><i class="fas fa-money-bill-wave"></i> Tarifa:</label>
+                        <select id="point-map-tarifa" class="login-input" required>
+                            <option value="">Seleccione tarifa</option>
+                            <option value="Doméstica">Doméstica</option>
+                            <option value="Comercial">Comercial</option>
+                            <option value="Industrial">Industrial</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="login-input-group">
+                        <label for="point-map-vialidad"><i class="fas fa-road"></i> Vialidad:</label>
+                        <select id="point-map-vialidad" class="login-input">
+                            <option value="">Seleccione vialidad (opcional)</option>
+                        </select>
+                    </div>
+                    <div class="login-input-group">
+                        <label for="point-map-colonia"><i class="fas fa-building"></i> Colonia:</label>
+                        <select id="point-map-colonia" class="login-input">
+                            <option value="">Seleccione colonia (opcional)</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div id="create-point-map-message"></div>
+                <div id="create-point-map-error"></div>
+                
+                <button type="submit" id="create-point-map-btn" style="width:100%; padding:16px; background:linear-gradient(135deg, #28a745, #20c997); color:white; border:none; border-radius:8px; font-weight:bold; margin-top:10px;">
+                    <i class="fas fa-plus-circle"></i> AGREGAR PUNTO
+                </button>
+            </form>
+        </div>
+        
+        <!-- TOOLTIP PARA MODO AGREGAR PUNTO -->
+        <div id="add-mode-tooltip" class="add-mode-tooltip">
+            <i class="fas fa-info-circle"></i> Modo agregar punto activado - Haz clic en el mapa
+        </div>
+        
+        <div id="sidebar" class="hidden">
+            <h1><i class="fas fa-map-marked-alt"></i> GEOPORTAL 2025 <span>PADRÓN + SECTORES</span></h1>
+            
+            <div class="tabs">
+                <div class="tab active" data-tab="layers"><i class="fas fa-layer-group"></i> Capas</div>
+                <div class="tab" data-tab="filters-padron"><i class="fas fa-filter"></i> Padrón</div>
+                <div class="tab" data-tab="filters-sectores"><i class="fas fa-filter"></i> Sectores</div>
+                <div class="tab" data-tab="user"><i class="fas fa-user"></i> Usuario</div>
+            </div>
+            
+            <div id="tab-layers" class="tab-content active">
+                <div class="layer-controls">
+                    <div class="layer-toggle">
+                        <div class="layer-info"><div class="layer-icon padron-icon"><i class="fas fa-users"></i></div><div><div class="layer-name">PADRÓN 2025</div><div class="layer-stats" id="padronStats">0 registros</div></div></div>
+                        <label class="switch"><input type="checkbox" id="togglePadron" checked><span class="slider"></span></label>
+                    </div>
+                    <div class="layer-toggle">
+                        <div class="layer-info"><div class="layer-icon sectores-icon"><i class="fas fa-draw-polygon"></i></div><div><div class="layer-name">SECTORES 2025</div><div class="layer-stats" id="sectoresStats">0 polígonos</div></div></div>
+                        <label class="switch"><input type="checkbox" id="toggleSectores" checked><span class="slider"></span></label>
+                    </div>
+                </div>
+                
+                <div class="stats-container">
+                    <h2><i class="fas fa-chart-bar"></i> ESTADÍSTICAS</h2>
+                    <div class="stats-grid">
+                        <div class="stat-card"><span class="stat-value" id="totalPadron">0</span><span class="stat-label">Usuarios</span></div>
+                        <div class="stat-card"><span class="stat-value" id="totalSectores">0</span><span class="stat-label">Sectores</span></div>
+                        <div class="stat-card"><span class="stat-value" id="conCoordenadas">0</span><span class="stat-label">Con Coord.</span></div>
+                        <div class="stat-card"><span class="stat-value" id="mostrando">0</span><span class="stat-label">Mostrando</span></div>
+                    </div>
+                    <div class="batch-info" id="batchInfo"><i class="fas fa-sync-alt"></i> Cargando datos...</div>
+                    <div class="debug-info" id="debugInfo"></div>
+                </div>
+                
+                <div class="filters-container">
+                    <h2><i class="fas fa-sliders-h"></i> CONTROLES</h2>
+                    <div class="filter-group">
+                        <label><i class="fas fa-circle"></i> Opacidad Padrón: <span id="opacityPadronValue">70%</span></label>
+                        <input type="range" id="opacityPadron" class="opacity-slider" min="0" max="100" value="70">
+                    </div>
+                    <div class="filter-group">
+                        <label><i class="fas fa-square"></i> Opacidad Sectores: <span id="opacitySectoresValue">40%</span></label>
+                        <input type="range" id="opacitySectores" class="opacity-slider" min="0" max="100" value="40">
+                    </div>
+                    <div class="tab-buttons">
+                        <button id="btnResetView" class="btn-reset touch-feedback"><i class="fas fa-crosshairs"></i> Centrar Vista</button>
+                        <button id="btnClearAll" class="btn-clear touch-feedback"><i class="fas fa-trash"></i> Limpiar Todo</button>
+                        <button id="btnForceReload" class="btn-reset touch-feedback"><i class="fas fa-redo"></i> Forzar Recarga</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="tab-filters-padron" class="tab-content">
+                <div class="filters-container">
+                    <h2><i class="fas fa-filter"></i> FILTROS PADRÓN</h2>
+                    <div class="filter-group">
+                        <label><i class="fas fa-tag"></i> Estatus:</label>
+                        <div class="select-controls"><button id="btnSelectAllEstatus" class="btn-reset touch-feedback">Todo</button><button id="btnSelectNoneEstatus" class="btn-reset touch-feedback">Ninguno</button></div>
+                        <div class="checkbox-group" id="estatusCheckboxGroup"><div class="filter-loading">Cargando opciones de estatus...</div></div>
+                    </div>
+                    <div class="filter-group">
+                        <label><i class="fas fa-map-marker-alt"></i> Zona:</label>
+                        <div class="select-controls"><button id="btnSelectAllZona" class="btn-reset touch-feedback">Todo</button><button id="btnSelectNoneZona" class="btn-reset touch-feedback">Ninguno</button></div>
+                        <div class="checkbox-group" id="zonaCheckboxGroup"><div class="filter-loading">Cargando opciones de zona...</div></div>
+                    </div>
+                    <div class="filter-group">
+                        <label><i class="fas fa-th-large"></i> Sector:</label>
+                        <div class="select-controls"><button id="btnSelectAllSector" class="btn-reset touch-feedback">Todo</button><button id="btnSelectNoneSector" class="btn-reset touch-feedback">Ninguno</button></div>
+                        <div class="checkbox-group" id="sectorCheckboxGroup"><div class="filter-loading">Cargando opciones de sector...</div></div>
+                    </div>
+                    <div class="filter-group">
+                        <label><i class="fas fa-money-bill-wave"></i> Tarifa:</label>
+                        <div class="select-controls"><button id="btnSelectAllTarifa" class="btn-reset touch-feedback">Todo</button><button id="btnSelectNoneTarifa" class="btn-reset touch-feedback">Ninguno</button></div>
+                        <div class="checkbox-group" id="tarifaCheckboxGroup"><div class="filter-loading">Cargando opciones de tarifa...</div></div>
+                    </div>
+                    <div class="filter-actions">
+                        <button id="btnApplyPadron" class="btn-apply touch-feedback"><i class="fas fa-check"></i> Aplicar Filtros</button>
+                        <button id="btnResetPadron" class="btn-reset touch-feedback"><i class="fas fa-eye"></i> Mostrar Todo</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="tab-filters-sectores" class="tab-content">
+                <div class="filters-container">
+                    <h2><i class="fas fa-filter"></i> FILTROS SECTORES</h2>
+                    <div class="filter-group">
+                        <label><i class="fas fa-th-large"></i> Sector:</label>
+                        <div class="select-controls"><button id="btnSelectAllSectorNombre" class="btn-reset touch-feedback">Todo</button><button id="btnSelectNoneSectorNombre" class="btn-reset touch-feedback">Ninguno</button></div>
+                        <div class="checkbox-group" id="sectorNombreCheckboxGroup"><div class="filter-loading">Cargando opciones de sector...</div></div>
+                    </div>
+                    <div class="filter-group">
+                        <label><i class="fas fa-th"></i> Subsector:</label>
+                        <div class="select-controls"><button id="btnSelectAllSubsector" class="btn-reset touch-feedback">Todo</button><button id="btnSelectNoneSubsector" class="btn-reset touch-feedback">Ninguno</button></div>
+                        <div class="checkbox-group" id="subsectorCheckboxGroup"><div class="filter-loading">Cargando opciones de subsector...</div></div>
+                    </div>
+                    <div class="filter-group">
+                        <label><i class="fas fa-th-large"></i> Macrosector:</label>
+                        <div class="select-controls"><button id="btnSelectAllMacrosector" class="btn-reset touch-feedback">Todo</button><button id="btnSelectNoneMacrosector" class="btn-reset touch-feedback">Ninguno</button></div>
+                        <div class="checkbox-group" id="macrosectorCheckboxGroup"><div class="filter-loading">Cargando opciones de macrosector...</div></div>
+                    </div>
+                    <div class="filter-group">
+                        <label><i class="fas fa-map-marker-alt"></i> Zona:</label>
+                        <div class="select-controls"><button id="btnSelectAllZonaSector" class="btn-reset touch-feedback">Todo</button><button id="btnSelectNoneZonaSector" class="btn-reset touch-feedback">Ninguno</button></div>
+                        <div class="checkbox-group" id="zonaSectorCheckboxGroup"><div class="filter-loading">Cargando opciones de zona...</div></div>
+                    </div>
+                    <div class="filter-actions">
+                        <button id="btnApplySectores" class="btn-apply touch-feedback"><i class="fas fa-check"></i> Aplicar Filtros</button>
+                        <button id="btnResetSectores" class="btn-reset touch-feedback"><i class="fas fa-eye"></i> Mostrar Todo</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="tab-user" class="tab-content">
+                <div class="filters-container">
+                    <h2><i class="fas fa-user-circle"></i> INFORMACIÓN</h2>
+                    <div class="user-info-item"><strong><i class="fas fa-user"></i> Usuario conectado:</strong><span id="logged-user">No identificado</span></div>
+                    <div class="user-info-item"><strong><i class="fas fa-sign-in-alt"></i> Fecha de acceso:</strong><span id="login-time">-</span></div>
+                    <div class="user-info-item"><strong><i class="fas fa-clock"></i> Última actividad:</strong><span id="last-activity">-</span></div>
+                    <div class="user-info-item"><strong><i class="fas fa-info-circle"></i> Estado:</strong><span id="connection-status"><i class="fas fa-wifi"></i> Conectado</span></div>
+                    <div class="filter-actions">
+                        <button id="btnRefreshSession" class="btn-apply touch-feedback"><i class="fas fa-sync-alt"></i> Actualizar</button>
+                        <button id="btnLogout" class="btn-clear touch-feedback"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="legend">
+                <h2><i class="fas fa-palette"></i> LEYENDA</h2>
+                <div class="legend-grid">
+                    <div class="legend-item"><div class="legend-color" style="background-color: #28a745;"></div><span>Usuarios Activos</span></div>
+                    <div class="legend-item"><div class="legend-color" style="background-color: #ffc107;"></div><span>Usuarios Suspendidos</span></div>
+                    <div class="legend-item"><div class="legend-color" style="background-color: #dc3545;"></div><span>Usuarios Cancelados</span></div>
+                    <div class="legend-item"><div class="legend-color" style="background: #007bff;"></div><span>Polígonos Sectores</span></div>
+                    <div class="legend-item"><div class="legend-color" style="background: #007bff;"></div><span>Usuarios Domésticos</span></div>
+                    <div class="legend-item"><div class="legend-color" style="background: #fd7e14;"></div><span>Usuarios Comerciales</span></div>
+                </div>
+            </div>
+            
+            <div id="error"></div>
+            
+            <div class="debug-info" style="margin-top: 15px; text-align: center;">
+                <i class="fas fa-mobile-alt"></i> Geoportal 2025 - Versión móvil
+                <br><small>Optimizado para dispositivos táctiles - Activa el modo agregar punto con el botón azul</small>
+            </div>
+        </div>
+        
+        <div id="map"></div>
+        
+        <!-- BOTONES DEL MAPA -->
+        <button id="toggle-add-mode" class="touch-feedback" title="Activar/Desactivar modo agregar punto">
+            <i class="fas fa-plus-circle"></i>
+        </button>
+        <button id="mobile-locate-btn" class="touch-feedback" title="Mi ubicación">
+            <i class="fas fa-location-arrow"></i>
+        </button>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
